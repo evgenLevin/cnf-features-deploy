@@ -107,11 +107,14 @@ var _ = Describe("[ptp]", func() {
 				configurePTP()
 			}
 			masterConfigs, slaveConfigs := discoveryPTPConfiguration(PtpLinuxDaemonNamespace)
+			fmt.Printf("110::masterConf= %v\n", masterConfigs)
 
 			if len(masterConfigs) != 0 {
 				masterRes := checkPtpProfileLabels(masterConfigs)
+				fmt.Printf("114::masterlabel= %v\n, masterRes=%v\n", masterRes.label, masterRes)
 				masterProfile = masterRes.profileName
 				masterNodeLabel = masterRes.label
+
 			}
 			if len(slaveConfigs) == 0 {
 				discoveryFailed = true
@@ -155,9 +158,11 @@ var _ = Describe("[ptp]", func() {
 
 				for _, pod := range ptpPods.Items {
 					if podRole(pod, slaveNodeLabel) {
+						fmt.Printf("158:slaveLaabel %v\n",slaveNodeLabel)
 						waitUntilLogIsDetected(pod, 3*time.Minute, "Profile Name:")
 						ptpSlaveRunningPods = append(ptpSlaveRunningPods, pod)
 					} else if podRole(pod, masterNodeLabel) {
+						fmt.Printf("162:master l;abel %v\n",masterNodeLabel)
 						waitUntilLogIsDetected(pod, 3*time.Minute, "Profile Name:")
 						ptpMasterRunningPods = append(ptpMasterRunningPods, pod)
 					}
@@ -443,6 +448,7 @@ func discoveryPTPConfiguration(namespace string) ([]ptpv1.PtpConfig, []ptpv1.Ptp
 	Expect(err).ToNot(HaveOccurred())
 	for _, config := range configList.Items {
 		for _, profile := range config.Spec.Profile {
+			fmt.Printf("451:: PTP4l: %v, PHC2sys: %v \n", *profile.Ptp4lOpts, *profile.Phc2sysOpts)
 			if isPtpMaster(*profile.Ptp4lOpts, *profile.Phc2sysOpts) {
 				masters = append(masters, config)
 			}
@@ -558,6 +564,7 @@ func mutateProfile(profile ptpv1.PtpConfig, profileName string, nodeName string)
 func waitUntilLogIsDetected(pod v1core.Pod, timeout time.Duration, neededLog string) {
 	Eventually(func() string {
 		logs, _ := pods.GetLog(&pod, PtpContainerName)
+		fmt.Printf("561:pod: %v\n",pod.Name)
 		return logs
 	}, timeout, 1*time.Second).Should(ContainSubstring(neededLog), fmt.Sprintf("Timeout to detect log \"%s\" in pod \"%s\"", neededLog, pod.Name))
 }

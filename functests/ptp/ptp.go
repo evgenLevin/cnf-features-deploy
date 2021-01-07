@@ -121,10 +121,13 @@ var _ = Describe("ptp", func() {
 				Expect(len(ptpPods.Items)).To(BeNumerically(">", 0))
 				slavePodDetected := false
 				for _, pod := range ptpPods.Items {
+					fmt.Printf("Pod str124 = %v::: SlavLabel = %v\n", pod.Name, slaveLabel)
 					if podRole(pod, slaveLabel) {
+						fmt.Printf("Pod str126 = %v\n", pod.Name)
 						Eventually(func() string {
 							buf, _ := pods.ExecCommand(client.Client, pod, []string{"curl", "127.0.0.1:9091/metrics"})
 							timeDiff = buf.String()
+							fmt.Printf("Metric str 130 = %v\n", timeDiff)
 							return timeDiff
 						}, 3*time.Minute, 2*time.Second).Should(ContainSubstring("openshift_ptp_max_offset_from_master"),
 							fmt.Sprint("Time metrics are not detected"))
